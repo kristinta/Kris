@@ -274,6 +274,8 @@
       <div class="section-title">📖 Словарь</div>
       <div class="toolbar">
         <button class="btn" onclick="toggleImport()">📥 Загрузить</button>
+                 <button class="btn" onclick="document.getElementById('file-import').click()">📂 Файл</button>
+         <input type="file" id="file-import" accept=".json" style="display:none" onchange="importFromFile(event)">
         <button class="btn" onclick="exportWords()">📤 Скачать JSON</button>
         <button class="btn" onclick="switchTab('add')">➕ Добавить</button>
         <button class="btn" onclick="toggleEditSelect()">✏️ Редактировать</button>
@@ -839,7 +841,29 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-loadWords();
+function importFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function() {
+    try {
+      const loaded = JSON.parse(reader.result);
+      if (!Array.isArray(loaded)) throw new Error();
+      const existing = new Set(words.map(w => JSON.stringify(w)));
+      let added = 0;
+      loaded.forEach(w => {
+        if (!existing.has(JSON.stringify(w))) { words.push(w); added++; }
+      });
+      saveWords();
+      alert('Добавлено слов из файла: ' + added);
+    } catch (e) {
+      alert('Ошибка: нужен JSON-файл из кнопки «Скачать JSON»');
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+  loadWords();
 
 
 function exportWords() {
