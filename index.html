@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Турецкий язык — Карточки</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --card: #ffffff;
+    --primary: #4f46e5;
+    --primary-light: #e0e7ff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px;
+  }
+  .container { width: 100%; max-width: 820px; }
+  header { text-align: center; margin-bottom: 20px; }
+  h1 { margin: 0 0 6px; font-size: 1.6rem; }
+  .subtitle { color: var(--muted); font-size: 0.95rem; }
+
+  .tabs {
+    display: flex; gap: 8px; margin-bottom: 18px; justify-content: center; flex-wrap: wrap;
+  }
+  .tab {
+    padding: 10px 18px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--card); cursor: pointer; font-size: 0.95rem; user-select: none;
+    transition: all .2s ease;
+  }
+  .tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .tab:hover { transform: translateY(-1px); }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} to { opacity: 1; transform: translateY(0);} }
+
+  .card {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px; margin-bottom: 16px;
+  }
+
+  .controls {
+    display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .controls label { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+  .controls select, .controls button, .btn {
+    padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); font-size: 0.95rem; background: #fff; cursor: pointer;
+  }
+  .controls button { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .controls button.secondary { background: #fff; color: var(--text); }
+  .controls button.active { background: var(--primary); color: #fff; }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+  .toggle-switch {
+    position: relative; width: 48px; height: 26px; background: var(--border); border-radius: 999px; cursor: pointer; transition: background .2s;
+  }
+  .toggle-switch.on { background: var(--primary); }
+  .toggle-switch::after {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: transform .2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .toggle-switch.on::after { transform: translateX(22px); }
+  .toggle-label { font-size: 0.9rem; font-weight: 600; }
+
+  .question {
+    text-align: center; padding: 28px 12px;
+    border: 2px dashed var(--border); border-radius: var(--radius); margin-bottom: 16px;
+  }
+  .question .word {
+    font-size: 2rem; font-weight: 700; color: var(--primary); margin-bottom: 6px;
+  }
+  .question .sentence { font-size: 1.3rem; font-weight: 600; color: var(--primary); margin-bottom: 6px; line-height: 1.4; }
+  .question .hint { color: var(--muted); font-size: 0.9rem; }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .option {
+    padding: 14px; border-radius: 12px; border: 1px solid var(--border); background: #fff;
+    cursor: pointer; text-align: center; font-weight: 600; transition: all .15s ease;
+    user-select: none; font-size: 0.95rem;
+  }
+  .option:hover { border-color: var(--primary); background: var(--primary-light); }
+  .option.correct { background: #d1fae5; border-color: var(--success); color: #065f46; }
+  .option.wrong { background: #fee2e2; border-color: var(--danger); color: #991b1b; }
+  .option.disabled { pointer-events: none; opacity: .9; }
+
+  .hint-btn-wrap { text-align: center; margin-bottom: 12px; }
+  .hint-btn { padding: 8px 16px; border-radius: 10px; border: 1px solid var(--warning); background: #fffbeb; color: #92400e; cursor: pointer; font-weight: 600; }
+  .hint-btn:hover { background: #fef3c7; }
+
+  .examples { display: none; margin-top: 14px; padding-top: 6px; }
+  .examples.open { display: block; animation: fade .3s ease; }
+
+  .ex-block { background: #fff; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: all .2s ease; }
+  .ex-header { padding: 12px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; user-select: none; }
+  .ex-header:hover { background: var(--primary-light); }
+  .ex-header .level { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+  .ex-header .tr { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+  .ex-body { display: none; padding: 12px 14px; background: #fff; border-top: 1px solid var(--border); }
+  .ex-block.open .ex-body { display: block; animation: fade .2s ease; }
+  .ex-block.open { border-color: var(--primary); box-shadow: 0 2px 8px rgba(79,70,229,0.08); }
+  .ex-block.open .arrow { transform: rotate(180deg); }
+  .arrow { font-size: 0.85rem; color: var(--muted); transition: transform .2s ease; }
+  .ex-body .ru { font-size: 0.95rem; color: var(--muted); margin-bottom: 12px; }
+
+  .progress-mini { display: flex; gap: 6px; margin-top: 8px; font-size: 0.8rem; color: var(--muted); flex-wrap: wrap; }
+  .progress-mini .bar { display: inline-flex; gap: 2px; }
+  .progress-mini .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .progress-mini .dot.filled { background: var(--success); }
+
+  .grammar-links {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    font-size: 0.85rem; color: var(--muted);
+  }
+  .grammar-links a { color: var(--primary); text-decoration: none; font-weight: 600; }
+  .grammar-links a:hover { text-decoration: underline; }
+
+  .stats { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; font-size: 0.9rem; color: var(--muted); margin-bottom: 10px; margin-top: 14px; }
+  .stat b { color: var(--text); }
+
+  .empty { text-align: center; color: var(--muted); padding: 30px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  @media (max-width: 560px) { .form-grid { grid-template-columns: 1fr; } .options { grid-template-columns: 1fr; } }
+  input, textarea, select.form-input {
+    width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); font: inherit; resize: vertical;
+  }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.success { background: var(--success); color: #fff; border-color: var(--success); }
+  .btn.danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .btn.small { padding: 6px 10px; font-size: 0.85rem; }
+
+  .word-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .word-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 12px; border-radius: 12px; background: #fff; border: 1px solid var(--border);
+  }
+  .word-item .meta { flex: 1; min-width: 0; }
+  .word-item .meta .w { font-weight: 700; }
+  .word-item .meta .t { color: var(--muted); font-size: 0.9rem; }
+  .word-item .actions { display: flex; gap: 6px; }
+
+  .badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--primary-light); color: var(--primary); margin-left: 6px; vertical-align: middle; }
+  .badge.pos { background: #fef3c7; color: #92400e; }
+  .badge.learned { background: #d1fae5; color: #065f46; }
+
+  .next-wrap { text-align: center; margin-top: 10px; }
+  .learned-banner {
+    background: #d1fae5; color: #065f46; padding: 12px; border-radius: 12px; text-align: center; font-weight: 700; margin-bottom: 14px; display: none;
+  }
+  .learned-banner.show { display: block; animation: fade .4s ease; }
+
+  /* Dictionary table scroll */
+  .dict-table-wrap { max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; margin-top: 10px; }
+  .dict-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  .dict-table th { position: sticky; top: 0; background: #f8fafc; padding: 8px 10px; text-align: left; font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .dict-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .dict-table tr:last-child td { border-bottom: none; }
+
+  .paste-area { width: 100%; min-height: 160px; font-family: monospace; font-size: 0.88rem; }
+  .hint-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 0.88rem; color: var(--muted); }
+  .hint-box code { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+
+  .section-title { font-weight: 700; margin-bottom: 10px; font-size: 1.05rem; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .toolbar .btn { font-size: 0.9rem; padding: 8px 14px; }
+
+  .bottom-bar { display: flex; justify-content: flex-end; margin-top: 12px; }
+
+  .select-edit { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px; font-size: 0.95rem; }
+
+  .mode-toggle-wrap { display: flex; gap: 8px; align-items: center; background: #f8fafc; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--border); }
+  .mode-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid transparent; background: transparent; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--muted); }
+  .mode-btn.active { background: #fff; border-color: var(--border); color: var(--primary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🇹🇷 Турецкий язык</h1>
+    <div class="subtitle">Карточки с примерами • A0 → A1</div>
+  </header>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('study')">📚 Учить</div>
+    <div class="tab" onclick="switchTab('learned')">✅ Выучено</div>
+    <div class="tab" onclick="switchTab('dict')">📖 Словарь</div>
+    <div class="tab" onclick="switchTab('add')">➕ Добавить</div>
+  </div>
+
+  <!-- Учить -->
+  <div id="panel-study" class="panel active">
+    <div class="card">
+      <div class="controls">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <label>Направление:</label>
+          <select id="direction" onchange="renderQuestion()">
+            <option value="ru-tr">Русский → Турецкий</option>
+            <option value="tr-ru">Турецкий → Русский</option>
+            <option value="both">Оба направления (случайно)</option>
+          </select>
+        </div>
+        <div class="mode-toggle-wrap">
+          <button class="mode-btn active" id="mode-words" onclick="setStudyType('words')">Слова</button>
+          <button class="mode-btn" id="mode-sentences" onclick="setStudyType('sentences')">Предложения</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <label>Группировать по:</label>
+          <select id="group-by" onchange="updateValueFilter()">
+            <option value="topic">Тема</option>
+            <option value="pos">Часть речи</option>
+          </select>
+          <select id="value-filter" onchange="applyFilter()">
+            <option value="all">Все</option>
+          </select>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label" id="mode-label">Учить</span>
+          <div class="toggle-switch" id="mode-toggle" onclick="toggleMode()"></div>
+          <span class="toggle-label" style="color:var(--muted)">Повторить</span>
+        </div>
+        <button class="secondary" onclick="shuffleWords()">🔀 Перемешать</button>
+      </div>
+      <div class="learned-banner" id="learned-banner">🎉 Слово выучено! Перенесено в раздел «Выучено»</div>
+      <div id="study-area">
+        <div class="question">
+          <div class="word" id="q-word">—</div>
+          <div class="sentence hidden" id="q-sentence">—</div>
+          <div class="hint" id="q-hint">Выберите правильный перевод</div>
+        </div>
+        <div class="options" id="options"></div>
+        <div class="hint-btn-wrap">
+          <button class="hint-btn" id="hint-btn" onclick="useHint()">💡 Подсказка</button>
+        </div>
+        <div id="feedback" style="text-align:center;font-weight:700;margin-bottom:10px;min-height:1.6em;"></div>
+        <div class="examples" id="examples"></div>
+        <div class="next-wrap"><button class="btn primary" id="nextBtn" style="display:none;" onclick="nextQuestion()">Следующее слово →</button></div>
+      </div>
+      <div class="stats">
+        <div class="stat">Всего: <b id="stat-total">0</b></div>
+        <div class="stat">Правильно: <b id="stat-ok">0</b></div>
+        <div class="stat">Ошибок: <b id="stat-bad">0</b></div>
+        <div class="stat">Индекс: <b id="stat-idx">1</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Выучено -->
+  <div id="panel-learned" class="panel">
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+        <strong>Выучено <span class="badge learned" id="learned-count">0</span></strong>
+        <button class="btn danger" onclick="resetLearned()">↺ Сбросить прогресс</button>
+      </div>
+      <div class="word-list" id="learned-list"></div>
+      <div class="empty" id="learned-empty">Пока нет выученных слов.</div>
+    </div>
+  </div>
+
+  <!-- Словарь -->
+  <div id="panel-dict" class="panel">
+    <div class="card">
+      <div class="section-title">📖 Словарь</div>
+      <div class="toolbar">
+        <button class="btn" onclick="toggleImport()">📥 Загрузить</button>
+        <button class="btn" onclick="exportWords()">📤 Скачать JSON</button>
+        <button class="btn" onclick="switchTab('add')">➕ Добавить</button>
+        <button class="btn" onclick="toggleEditSelect()">✏️ Редактировать</button>
+      </div>
+
+      <!-- Панель загрузки -->
+      <div id="import-panel" class="hidden" style="margin-bottom:14px;">
+        <div class="hint-box">
+          Скопируйте таблицу сюда. Первые строки с заголовками пропускаются автоматически.<br>
+          Колонки: <code>Слово</code> → <code>Перевод</code> → <code>Тема</code> → <code>Часть речи</code> → <code>A0-TR</code> → <code>A0-RU</code> → <code>A1-TR</code> → <code>A1-RU</code> → <code>A1+-TR</code> → <code>A1+-RU</code>
+        </div>
+        <textarea id="paste-data" class="paste-area" placeholder="Вставьте таблицу сюда..."></textarea>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+          <button class="btn secondary" onclick="document.getElementById('paste-data').value=''">Очистить</button>
+          <button class="btn primary" onclick="importData()">💾 Дозаписать слова</button>
+        </div>
+      </div>
+
+      <!-- Панель редактирования -->
+      <div id="edit-select-panel" class="hidden" style="margin-bottom:14px;">
+        <select class="select-edit" id="edit-select" onchange="startEditFromSelect(this.value)">
+          <option value="">Выберите карточку для редактирования...</option>
+        </select>
+      </div>
+
+      <div class="dict-table-wrap">
+        <table class="dict-table" id="dict-table">
+          <thead>
+            <tr><th>Слово</th><th>Перевод</th><th>Тема</th><th>Часть речи</th><th style="width:80px;"></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="dict-empty" style="padding:20px;">Словарь пуст. Загрузите слова через кнопку «Загрузить».</div>
+
+      <div class="bottom-bar">
+        <button class="btn danger" onclick="clearAll()">🗑️ Очистить словарь полностью</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Добавить / Редактировать -->
+  <div id="panel-add" class="panel">
+    <div class="card">
+      <strong id="form-title">Добавить новое слово</strong>
+      <input type="hidden" id="edit-id">
+      <div class="form-grid" style="margin-top:12px;">
+        <input id="in-tr" placeholder="Турецкое слово *" />
+        <input id="in-ru" placeholder="Русский перевод *" />
+      </div>
+      <div class="form-grid">
+        <input id="in-topic" placeholder="Тема" />
+        <input id="in-pos" placeholder="Часть речи" />
+      </div>
+      <div style="margin-bottom:10px;"><strong>Примеры</strong></div>
+      <div class="form-grid">
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A0 — Турецкое</div><input id="in-a0-tr" placeholder="" /></div>
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A0 — Перевод</div><input id="in-a0-ru" placeholder="" /></div>
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A1 — Турецкое</div><input id="in-a1-tr" placeholder="" /></div>
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A1 — Перевод</div><input id="in-a1-ru" placeholder="" /></div>
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A1+ — Турецкое</div><input id="in-a1p-tr" placeholder="" /></div>
+        <div><div style="font-size:0.85rem;color:var(--muted);margin-bottom:4px;">A1+ — Перевод</div><input id="in-a1p-ru" placeholder="" /></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px;">
+        <button class="btn secondary" onclick="resetForm()">Отмена</button>
+        <button class="btn primary" onclick="saveWord()">💾 Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'turkish-cards-v6';
+let words = [];
+let order = [];
+let idx = 0;
+let ok = 0;
+let bad = 0;
+let studyMode = 'learn';
+let studyType = 'words';
+let lastDir = 'ru-tr';
+let hintUsed = false;
+
+function saveWords() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
+  updateStats(); renderList(); renderLearned(); renderDict(); updateValueFilter();
+}
+
+function loadWords() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    words = raw ? JSON.parse(raw) : [];
+  } catch (e) { words = []; }
+  applyFilter();
+}
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function getFilteredWords() {
+  let pool = words.filter(w => studyMode === 'review' ? w.status === 'learned' : w.status !== 'learned');
+  const groupBy = document.getElementById('group-by').value;
+  const val = document.getElementById('value-filter').value;
+  if (val !== 'all') {
+    if (groupBy === 'topic') pool = pool.filter(w => w.topic === val);
+    else pool = pool.filter(w => w.pos === val);
+  }
+  return pool;
+}
+
+function applyFilter() {
+  const filtered = getFilteredWords();
+  order = shuffleArray(filtered.map((_, i) => i));
+  idx = 0; ok = 0; bad = 0; hintUsed = false;
+  updateStats(); renderQuestion(); renderList(); renderLearned(); renderDict(); updateValueFilter();
+}
+
+function shuffleWords() { applyFilter(); }
+
+function toggleMode() {
+  studyMode = studyMode === 'learn' ? 'review' : 'learn';
+  const sw = document.getElementById('mode-toggle');
+  const lbl = document.getElementById('mode-label');
+  if (studyMode === 'review') { sw.classList.add('on'); lbl.textContent = 'Повторить'; }
+  else { sw.classList.remove('on'); lbl.textContent = 'Учить'; }
+  applyFilter();
+}
+
+function setStudyType(type) {
+  studyType = type;
+  document.getElementById('mode-words').classList.toggle('active', type === 'words');
+  document.getElementById('mode-sentences').classList.toggle('active', type === 'sentences');
+  document.getElementById('q-word').classList.toggle('hidden', type === 'sentences');
+  document.getElementById('q-sentence').classList.toggle('hidden', type === 'words');
+  applyFilter();
+}
+
+function updateValueFilter() {
+  const groupBy = document.getElementById('group-by').value;
+  const sel = document.getElementById('value-filter');
+  const current = sel.value;
+  const vals = groupBy === 'topic'
+    ? ['all', ...new Set(words.map(w => w.topic).filter(Boolean))]
+    : ['all', ...new Set(words.map(w => w.pos).filter(Boolean))];
+  sel.innerHTML = '';
+  vals.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v === 'all' ? 'Все' : v;
+    if (v === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const map = {study:'📚 Учить',learned:'✅ Выучено',dict:'📖 Словарь',add:'➕ Добавить'};
+  document.querySelectorAll('.tab').forEach(t => { if (t.textContent.includes(map[name])) t.classList.add('active'); });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'learned') renderLearned();
+  if (name === 'dict') renderDict();
+}
+
+function updateStats() {
+  const filtered = getFilteredWords();
+  document.getElementById('stat-total').textContent = filtered.length;
+  document.getElementById('stat-ok').textContent = ok;
+  document.getElementById('stat-bad').textContent = bad;
+  document.getElementById('stat-idx').textContent = filtered.length ? (idx + 1) : 0;
+  document.getElementById('learned-count').textContent = words.filter(w => w.status === 'learned').length;
+}
+
+function getCurrentDir() {
+  const dir = document.getElementById('direction').value;
+  if (dir === 'both') return Math.random() < 0.5 ? 'ru-tr' : 'tr-ru';
+  return dir;
+}
+
+function getExamples(w) {
+  const arr = [];
+  if (w.a0_tr && w.a0_ru) arr.push({level:'A0–A1', tr:w.a0_tr, ru:w.a0_ru});
+  if (w.a1_tr && w.a1_ru) arr.push({level:'A1', tr:w.a1_tr, ru:w.a1_ru});
+  if (w.a1p_tr && w.a1p_ru) arr.push({level:'A1+', tr:w.a1p_tr, ru:w.a1p_ru});
+  return arr;
+}
+
+function renderQuestion() {
+  const area = document.getElementById('study-area');
+  const filtered = getFilteredWords();
+  if (!filtered.length) {
+    area.innerHTML = '<div class="empty">Нет слов. Поменяйте фильтр, режим или загрузите слова.</div>';
+    return;
+  }
+  if (!document.getElementById('q-word')) {
+    area.innerHTML = '<div class="question"><div class="word" id="q-word">—</div><div class="sentence hidden" id="q-sentence">—</div><div class="hint" id="q-hint">Выберите правильный перевод</div></div><div class="options" id="options"></div><div class="hint-btn-wrap"><button class="hint-btn" id="hint-btn" onclick="useHint()">💡 Подсказка</button></div><div id="feedback" style="text-align:center;font-weight:700;margin-bottom:10px;min-height:1.6em;"></div><div class="examples" id="examples"></div><div class="next-wrap"><button class="btn primary" id="nextBtn" style="display:none;" onclick="nextQuestion()">Следующее слово →</button></div>';
+  }
+
+  const w = filtered[order[idx]];
+  const dir = getCurrentDir();
+  lastDir = dir;
+  hintUsed = false;
+  document.getElementById('learned-banner').classList.remove('show');
+
+  if (studyType === 'words') {
+    document.getElementById('q-word').classList.remove('hidden');
+    document.getElementById('q-sentence').classList.add('hidden');
+    const q = dir === 'ru-tr' ? w.ru : w.tr;
+    const a = dir === 'ru-tr' ? w.tr : w.ru;
+    const others = filtered.filter((_, i) => i !== order[idx]).map(x => dir === 'ru-tr' ? x.tr : x.ru);
+    const opts = shuffleArray([a, ...shuffleArray(others).slice(0, 3)]);
+    document.getElementById('q-word').textContent = q;
+    document.getElementById('q-hint').textContent = dir === 'ru-tr' ? 'Выберите турецкий перевод' : 'Выберите русский перевод';
+    renderOptions(opts, a, w, false);
+  } else {
+    // sentences mode
+    document.getElementById('q-word').classList.add('hidden');
+    document.getElementById('q-sentence').classList.remove('hidden');
+    const exs = getExamples(w);
+    if (!exs.length) {
+      // fallback to words if no examples
+      setStudyType('words');
+      renderQuestion();
+      return;
+    }
+    const ex = exs[Math.floor(Math.random() * exs.length)];
+    // Show TR sentence, answer options are RU translations (or vice versa based on dir)
+    const showTr = (dir === 'ru-tr' || dir === 'both' ? Math.random() < 0.5 : dir === 'tr-ru') ? false : true; // simplified: show tr, answer ru
+    const qText = showTr ? ex.tr : ex.ru;
+    const aText = showTr ? ex.ru : ex.tr;
+    // Gather all example translations from other words
+    let pool = [];
+    filtered.forEach((x, i) => {
+      if (i === order[idx]) return;
+      getExamples(x).forEach(e => pool.push(showTr ? e.ru : e.tr));
+    });
+    const others = shuffleArray(pool).slice(0, 3);
+    const opts = shuffleArray([aText, ...others]);
+    document.getElementById('q-sentence').textContent = qText;
+    document.getElementById('q-hint').textContent = showTr ? 'Выберите русский перевод' : 'Выберите турецкое предложение';
+    renderOptions(opts, aText, w, true);
+  }
+
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('feedback').className = '';
+  document.getElementById('examples').classList.remove('open');
+  document.getElementById('examples').innerHTML = '';
+  document.getElementById('nextBtn').style.display = 'none';
+  document.querySelectorAll('.option').forEach(el => { el.classList.remove('disabled','correct','wrong'); el.style.pointerEvents='auto'; el.style.opacity='1'; });
+}
+
+function renderOptions(opts, correct, word, isSentence) {
+  const box = document.getElementById('options');
+  box.innerHTML = '';
+  opts.forEach(opt => {
+    const el = document.createElement('div');
+    el.className = 'option';
+    el.textContent = opt;
+    el.dataset.val = opt;
+    el.onclick = () => chooseOption(el, opt, correct, word);
+    box.appendChild(el);
+  });
+}
+
+function chooseOption(el, chosen, correct, word) {
+  const all = document.querySelectorAll('.option');
+  all.forEach(b => b.classList.add('disabled'));
+  const fb = document.getElementById('feedback');
+  if (chosen === correct) {
+    el.classList.add('correct');
+    if (!hintUsed) {
+      fb.textContent = '✅ Правильно!'; fb.style.color = 'var(--success)';
+      ok++;
+      if (studyType === 'words') {
+        if (lastDir === 'ru-tr') word.correctRuTr = (word.correctRuTr || 0) + 1;
+        else word.correctTrRu = (word.correctTrRu || 0) + 1;
+      } else {
+        // sentences: increment both as mixed practice
+        word.correctRuTr = (word.correctRuTr || 0) + 1;
+        word.correctTrRu = (word.correctTrRu || 0) + 1;
+      }
+      saveWords();
+      if (word.correctRuTr >= 10 && word.correctTrRu >= 10 && word.status !== 'learned') {
+        word.status = 'learned';
+        saveWords();
+        document.getElementById('learned-banner').classList.add('show');
+      }
+    } else {
+      fb.textContent = '✅ Правильный ответ (подсказка использована)'; fb.style.color = 'var(--success)';
+    }
+  } else {
+    el.classList.add('wrong');
+    all.forEach(b => { if (b.dataset.val === correct) b.classList.add('correct'); });
+    if (!hintUsed) { fb.textContent = '❌ Неверно. Правильный ответ: ' + correct; fb.style.color = 'var(--danger)'; bad++; }
+    else { fb.textContent = '❌ Подсказка использована. Правильный ответ: ' + correct; fb.style.color = 'var(--danger)'; }
+  }
+  showExamples(word);
+  document.getElementById('nextBtn').style.display = 'inline-block';
+  document.getElementById('hint-btn').style.display = 'none';
+  updateStats();
+}
+
+function useHint() {
+  hintUsed = true;
+  const all = document.querySelectorAll('.option');
+  let correctVal = '';
+  all.forEach(b => { if (b.classList.contains('correct')) correctVal = b.dataset.val; });
+  // If not revealed yet, find correct from dataset
+  if (!correctVal) {
+    // Find which one is correct by checking against current word
+    const filtered = getFilteredWords();
+    const w = filtered[order[idx]];
+    const dir = lastDir;
+    if (studyType === 'words') {
+      correctVal = dir === 'ru-tr' ? w.tr : w.ru;
+    } else {
+      // sentence mode: need to find the correct text from options
+      // Since we don't store it easily, just highlight all and let user see
+    }
+  }
+  all.forEach(b => {
+    if (b.dataset.val === correctVal) b.classList.add('correct');
+    b.classList.add('disabled');
+  });
+  document.getElementById('feedback').textContent = '💡 Подсказка: правильный ответ подсвечен. Попробуйте запомнить!'; 
+  document.getElementById('feedback').style.color = 'var(--warning)';
+  document.getElementById('nextBtn').style.display = 'inline-block';
+}
+
+function renderProgress(word) {
+  const ru = Math.min(word.correctRuTr || 0, 10);
+  const tr = Math.min(word.correctTrRu || 0, 10);
+  let html = '<div class="progress-mini">';
+  html += '<span>ru→tr:</span><span class="bar">';
+  for (let i=0;i<10;i++) html += '<span class="dot ' + (i<ru?'filled':'') + '"></span>';
+  html += '</span><span>tr→ru:</span><span class="bar">';
+  for (let i=0;i<10;i++) html += '<span class="dot ' + (i<tr?'filled':'') + '"></span>';
+  html += '</span></div>';
+  return html;
+}
+
+function showExamples(word) {
+  const exWrap = document.getElementById('examples');
+  exWrap.innerHTML = '';
+  const exs = getExamples(word);
+  exs.forEach((ex) => {
+    const block = document.createElement('div');
+    block.className = 'ex-block';
+    const header = document.createElement('div');
+    header.className = 'ex-header';
+    header.innerHTML = '<div><div class="level">' + escapeHtml(ex.level) + '</div><div class="tr">' + escapeHtml(ex.tr) + '</div></div><div class="arrow">▼</div>';
+    header.onclick = () => block.classList.toggle('open');
+    const body = document.createElement('div');
+    body.className = 'ex-body';
+    body.innerHTML = '<div class="ru">' + escapeHtml(ex.ru) + '</div>' +
+      '<div class="grammar-links">📖 Спряжение: <a href="https://fiilcihaz.readymaker.ru/" target="_blank">Fiilcihaz</a> · <a href="https://turkly.ru/media/vremena-v-tureckom" target="_blank">Turkly</a></div>';
+    block.appendChild(header);
+    block.appendChild(body);
+    exWrap.appendChild(block);
+  });
+  const prog = document.createElement('div');
+  prog.style.marginTop = '12px';
+  prog.innerHTML = renderProgress(word);
+  exWrap.appendChild(prog);
+  exWrap.classList.add('open');
+}
+
+function nextQuestion() {
+  const filtered = getFilteredWords();
+  if (!filtered.length) return;
+  idx = (idx + 1) % filtered.length;
+  if (idx === 0) order = shuffleArray(filtered.map((_, i) => i));
+  updateStats();
+  renderQuestion();
+  document.getElementById('hint-btn').style.display = 'inline-block';
+}
+
+function renderList() {
+  // not used separately now; dict handles listing
+}
+
+function renderDict() {
+  const tbody = document.querySelector('#dict-table tbody');
+  const empty = document.getElementById('dict-empty');
+  const sel = document.getElementById('edit-select');
+  tbody.innerHTML = '';
+  if (!words.length) { empty.style.display = 'block'; sel.innerHTML = '<option value="">Нет слов</option>'; return; }
+  empty.style.display = 'none';
+
+  // populate edit select
+  let opts = '<option value="">Выберите карточку для редактирования...</option>';
+  words.forEach(w => {
+    opts += '<option value="' + w.id + '">' + escapeHtml(w.tr) + ' — ' + escapeHtml(w.ru) + '</option>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + escapeHtml(w.tr) + '</td><td>' + escapeHtml(w.ru) + '</td><td>' + escapeHtml(w.topic||'') + '</td><td>' + escapeHtml(w.pos||'') + '</td><td><button class="btn small" onclick="editWord(\'' + w.id + '\')">✏️</button></td>';
+    tbody.appendChild(tr);
+  });
+  sel.innerHTML = opts;
+}
+
+function toggleImport() {
+  const p = document.getElementById('import-panel');
+  p.classList.toggle('hidden');
+  document.getElementById('edit-select-panel').classList.add('hidden');
+}
+
+function toggleEditSelect() {
+  const p = document.getElementById('edit-select-panel');
+  p.classList.toggle('hidden');
+  document.getElementById('import-panel').classList.add('hidden');
+}
+
+function startEditFromSelect(id) {
+  if (!id) return;
+  editWord(id);
+  switchTab('add');
+  toggleEditSelect();
+}
+
+function renderLearned() {
+  const list = document.getElementById('learned-list');
+  const empty = document.getElementById('learned-empty');
+  list.innerHTML = '';
+  const pool = words.filter(w => w.status === 'learned');
+  if (!pool.length) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  pool.forEach(w => {
+    const row = document.createElement('div');
+    row.className = 'word-item';
+    row.innerHTML = '<div class="meta"><div class="w">' + escapeHtml(w.tr) + '<span style="color:var(--muted);font-weight:400;"> — ' + escapeHtml(w.ru) + '</span> <span class="badge pos">' + escapeHtml(w.topic||'') + '</span> <span class="badge learned">✓</span></div><div class="t">ru→tr: ' + (w.correctRuTr||0) + ' | tr→ru: ' + (w.correctTrRu||0) + '</div></div><div class="actions"><button class="btn small" onclick="unlearnWord(\'' + w.id + '\')">↩️ Вернуть</button></div>';
+    list.appendChild(row);
+  });
+}
+
+function unlearnWord(id) {
+  const w = words.find(x => x.id === id);
+  if (!w) return;
+  w.status = 'learning';
+  w.correctRuTr = 0; w.correctTrRu = 0;
+  saveWords();
+}
+
+function resetLearned() {
+  if (!confirm('Сбросить прогресс всех выученных слов?')) return;
+  words.forEach(w => { w.status = 'learning'; w.correctRuTr = 0; w.correctTrRu = 0; });
+  saveWords();
+}
+
+function generateId() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function saveWord() {
+  const id = document.getElementById('edit-id').value || generateId();
+  const tr = document.getElementById('in-tr').value.trim();
+  const ru = document.getElementById('in-ru').value.trim();
+  if (!tr || !ru) { alert('Заполните слово и перевод'); return; }
+  const existing = words.findIndex(x => x.id === id);
+  const entry = {
+    id, tr, ru,
+    topic: document.getElementById('in-topic').value.trim() || 'Другое',
+    pos: document.getElementById('in-pos').value.trim(),
+    a0_tr: document.getElementById('in-a0-tr').value.trim(),
+    a0_ru: document.getElementById('in-a0-ru').value.trim(),
+    a1_tr: document.getElementById('in-a1-tr').value.trim(),
+    a1_ru: document.getElementById('in-a1-ru').value.trim(),
+    a1p_tr: document.getElementById('in-a1p-tr').value.trim(),
+    a1p_ru: document.getElementById('in-a1p-ru').value.trim(),
+    correctRuTr: 0, correctTrRu: 0, status: 'learning'
+  };
+  if (existing >= 0) { words[existing] = {...words[existing], ...entry}; }
+  else words.push(entry);
+  saveWords();
+  resetForm();
+  switchTab('dict');
+}
+
+function editWord(id) {
+  const w = words.find(x => x.id === id);
+  if (!w) return;
+  document.getElementById('edit-id').value = w.id;
+  document.getElementById('in-tr').value = w.tr;
+  document.getElementById('in-ru').value = w.ru;
+  document.getElementById('in-topic').value = w.topic || '';
+  document.getElementById('in-pos').value = w.pos || '';
+  document.getElementById('in-a0-tr').value = w.a0_tr || '';
+  document.getElementById('in-a0-ru').value = w.a0_ru || '';
+  document.getElementById('in-a1-tr').value = w.a1_tr || '';
+  document.getElementById('in-a1-ru').value = w.a1_ru || '';
+  document.getElementById('in-a1p-tr').value = w.a1p_tr || '';
+  document.getElementById('in-a1p-ru').value = w.a1p_ru || '';
+  document.getElementById('form-title').textContent = 'Редактировать карточку';
+  switchTab('add');
+}
+
+function deleteWord(id) {
+  if (!confirm('Удалить?')) return;
+  words = words.filter(x => x.id !== id);
+  saveWords();
+  applyFilter();
+}
+
+function resetForm() {
+  document.getElementById('edit-id').value = '';
+  ['in-tr','in-ru','in-topic','in-pos','in-a0-tr','in-a0-ru','in-a1-tr','in-a1-ru','in-a1p-tr','in-a1p-ru'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('form-title').textContent = 'Добавить новое слово';
+}
+
+function clearAll() {
+  if (!confirm('Удалить все слова из словаря?')) return;
+  words = []; saveWords(); applyFilter();
+}
+
+function importData() {
+  const raw = document.getElementById('paste-data').value.trim();
+  if (!raw) { alert('Вставьте данные'); return; }
+  const lines = raw.split(/\r?\n/);
+  let skipped = 0;
+  let added = 0;
+  let dups = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    // Skip markdown separator
+    if (line.replace(/\|/g,'').trim().replace(/-/g,'').trim() === '') continue;
+    let cols = line.split('\t');
+    if (cols.length < 6) cols = line.split(';');
+    if (cols.length < 6) {
+      const pipe = line.split('|').map(s => s.trim()).filter(s => s);
+      if (pipe.length >= 6) cols = pipe;
+    }
+    if (cols.length < 6) cols = line.split(/  +/);
+    if (cols.length < 6) { skipped++; continue; }
+    const first = cols[0].toLowerCase().trim();
+    if (first.includes('слово') || first.includes('word') || first.includes('перевод') || first.includes('тема') || first.includes('ad') || first.includes('tr')) { skipped++; continue; }
+    const tr = cols[0].trim();
+    const ru = cols[1].trim();
+    if (!tr || !ru) { skipped++; continue; }
+    if (words.some(w => w.tr === tr && w.ru === ru)) { dups++; continue; }
+    words.push({
+      id: generateId(), tr, ru,
+      topic: (cols[2] || '').trim() || 'Другое',
+      pos: (cols[3] || '').trim(),
+      a0_tr: (cols[4] || '').trim(),
+      a0_ru: (cols[5] || '').trim(),
+      a1_tr: (cols[6] || '').trim(),
+      a1_ru: (cols[7] || '').trim(),
+      a1p_tr: (cols[8] || '').trim(),
+      a1p_ru: (cols[9] || '').trim(),
+      correctRuTr: 0, correctTrRu: 0, status: 'learning'
+    });
+    added++;
+  }
+  saveWords();
+  document.getElementById('paste-data').value = '';
+  alert('Добавлено: ' + added + ' | Дубликатов: ' + dups + ' | Пропущено: ' + skipped);
+  switchTab('dict');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text || '';
+  return div.innerHTML;
+}
+
+loadWords();
+
+
+function exportWords() {
+  const data = localStorage.getItem(STORAGE_KEY) || '[]';
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'turkish-cards-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+</script>
+</body>
+</html>
