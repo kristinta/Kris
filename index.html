@@ -357,7 +357,7 @@ let bad = 0;
 let studyMode = 'learn';
 let studyType = 'words';
 let lastDir = 'ru-tr';
-let hintUsed = false;
+let hintUsed = false; let selectedLevels = new Set(['A0','A1','A2']);
 
 function saveWords() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
@@ -824,7 +824,7 @@ function importData() {
       a1_tr: (cols[6] || '').trim(),
       a1_ru: (cols[7] || '').trim(),
       a1p_tr: (cols[8] || '').trim(),
-      a1p_ru: (cols[9] || '').trim(),
+            a1p_ru: (cols[9] || '').trim(),       level: (cols[10] || '').trim().toUpperCase(),
       correctRuTr: 0, correctTrRu: 0, status: 'learning'
     });
     added++;
