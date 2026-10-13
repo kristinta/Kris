@@ -863,10 +863,10 @@ function importFromFile(event) {
   reader.readAsText(file);
 }
 
-function toggleLevel(btn) {
+function styleLevelChip(btn) {   const on = btn.classList.contains('active');   btn.style.background = on ? '#2f6fed' : '#e5e7eb';   btn.style.color = on ? '#fff' : '#6b7280'; } function toggleLevel(btn) {
   const lv = btn.dataset.lv;
   if (selectedLevels.has(lv)) selectedLevels.delete(lv); else selectedLevels.add(lv);
-  btn.classList.toggle('active', selectedLevels.has(lv));
+  btn.classList.toggle('active', selectedLevels.has(lv));   styleLevelChip(btn);
   applyFilter();
 }
 
