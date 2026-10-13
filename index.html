@@ -379,7 +379,7 @@ function shuffleArray(arr) {
 }
 
 function getFilteredWords() {
-  let pool = words.filter(w => studyMode === 'review' ? w.status === 'learned' : w.status !== 'learned');
+  let pool = words.filter(w => studyMode === 'review' ? w.status === 'learned' : w.status !== 'learned');   if (selectedLevels.size) {     pool = pool.filter(w => {       const ls = w.level ? String(w.level).toUpperCase().split(/[+,/ ]+/).filter(Boolean) : null;       return !ls || ls.some(l => selectedLevels.has(l));     });   }
   const groupBy = document.getElementById('group-by').value;
   const val = document.getElementById('value-filter').value;
   if (val !== 'all') {
@@ -521,7 +521,7 @@ function renderQuestion() {
     renderOptions(opts, aText, w, true);
   }
 
-  document.getElementById('feedback').textContent = '';
+  const qBadge = document.getElementById('q-badge');   if (qBadge) { const lv = w.level ? String(w.level).toUpperCase() : ''; qBadge.textContent = lv; qBadge.style.display = lv ? 'inline-block' : 'none'; }   document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = '';
   document.getElementById('examples').classList.remove('open');
   document.getElementById('examples').innerHTML = '';
@@ -863,10 +863,10 @@ function importFromFile(event) {
   };
   reader.readAsText(file);
 }
-  loadWords();
+  initLevelFilter();   loadWords();
 
 
-function exportWords() {
+function toggleLevel(btn) {   const lv = btn.dataset.lv;   if (selectedLevels.has(lv)) selectedLevels.delete(lv); else selectedLevels.add(lv);   btn.classList.toggle('active', selectedLevels.has(lv));   applyFilter(); }  function initLevelFilter() {   if (document.getElementById('level-row')) return;   const row = document.createElement('div');   row.id = 'level-row';   row.innerHTML = '<span style="font-weight:600;">Уровень:</span>' +     '<button type="button" class="level-chip active" data-lv="A0" onclick="toggleLevel(this)">A0</button>' +     '<button type="button" class="level-chip active" data-lv="A1" onclick="toggleLevel(this)">A1</button>' +     '<button type="button" class="level-chip active" data-lv="A2" onclick="toggleLevel(this)">A2</button>';   const toggle = document.getElementById('mode-toggle');   if (toggle) {     const rowDiv = toggle.parentElement;     rowDiv.parentElement.insertBefore(row, rowDiv.nextSibling);   } else {     document.body.appendChild(row);   }   const dt = document.querySelector('#dict-table thead tr');   if (dt && dt.children.length >= 4) {     const th = document.createElement('th');     th.textContent = 'Уровень';     dt.insertBefore(th, dt.lastElementChild);   }   const hint = document.querySelector('.hint-box');   if (hint && !hint.querySelector('.lvl-hint')) {     const s = document.createElement('span');     s.className = 'lvl-hint';     s.innerHTML = ' → <code>Уровень</code>';     hint.appendChild(s);   }   const st = document.createElement('style');   st.textContent =     '#mode-words, #mode-sentences { background:#e5e7eb !important; color:#6b7280 !important; }' +     '#mode-words.active, #mode-sentences.active { background:#2f6fed !important; color:#fff !important; }' +     '.level-chip { border:none; border-radius:20px; padding:7px 16px; font-size:0.95rem; font-weight:600; background:#e5e7eb; color:#6b7280; cursor:pointer; }' +     '.level-chip.active { background:#2f6fed; color:#fff; }' +     '.level-badge { background:#e8efff; color:#2f6fed; border-radius:10px; padding:3px 10px; font-size:0.85rem; font-weight:700; margin:0 0 8px; display:inline-block; }' +     '#level-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }';   document.head.appendChild(st); } function exportWords() {
   const data = localStorage.getItem(STORAGE_KEY) || '[]';
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
