@@ -789,7 +789,7 @@ function importData() {
   const lines = raw.split(/\r?\n/);
   let skipped = 0;
   let added = 0;
-  let dups = 0;
+  let dups = 0;   const skippedList = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -801,12 +801,12 @@ function importData() {
       if (pipe.length >= 6) cols = pipe;
     }
     if (cols.length < 6) cols = line.split(/  +/);
-    if (cols.length < 6) { skipped++; continue; }
+    if (cols.length < 6) { skipped++; const t0 = line.split(/	|;|\|/)[0].trim(); if (t0) skippedList.push(t0); continue; }
     const first = cols[0].toLowerCase().trim();
     if (first.includes('слово') || first.includes('word') || first.includes('перевод') || first.includes('тема') || first.includes('ad') || first.includes('tr')) { skipped++; continue; }
     const tr = cols[0].trim();
     const ru = cols[1].trim();
-    if (!tr || !ru) { skipped++; continue; }
+    if (!tr || !ru) { skipped++; if (tr) skippedList.push(tr); continue; }
     const dup = words.find(w => w.tr === tr && w.ru === ru);
     if (dup) {
       const lvl = (cols[10] || '').trim().toUpperCase();
@@ -830,7 +830,7 @@ function importData() {
   }
   saveWords();
   document.getElementById('paste-data').value = '';
-  alert('Добавлено: ' + added + ' | Дубликатов: ' + dups + ' | Пропущено: ' + skipped);
+  showSkippedList('Добавлено: ' + added + ' | Дубликатов: ' + dups + ' | Пропущено: ' + skipped, skippedList);
   switchTab('dict');
 }
 
@@ -909,7 +909,7 @@ function initLevelFilter() {
   document.head.appendChild(st);
 }
 
-function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function exportWords() {
+function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function showSkippedList(msg, items) {   if (!items.length) { alert(msg); return; }   const old = document.getElementById('skipped-modal');   if (old) old.remove();   const d = document.createElement('div');   d.id = 'skipped-modal';   d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;';   const box = document.createElement('div');   box.style.cssText = 'background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.25);';   box.innerHTML = '<div style="padding:16px 20px;border-bottom:1px solid #eee;font-weight:700;">' + msg + '<br><span style="font-weight:400;color:#6b7280;font-size:.9rem;">Слова, которые не добавились:</span></div>' +     '<div style="padding:10px 20px;overflow:auto;font-size:.9rem;line-height:1.7;max-height:50vh;">' + items.map(w => '• ' + escapeHtml(w)).join('<br>') + '</div>' +     '<div style="padding:12px 20px;text-align:right;border-top:1px solid #eee;"><button class="btn primary" style="min-width:90px;">ОК</button></div>';   box.querySelector('button').onclick = () => d.remove();   d.onclick = (e) => { if (e.target === d) d.remove(); };   d.appendChild(box);   document.body.appendChild(d); }  function exportWords() {
   const data = localStorage.getItem(STORAGE_KEY) || '[]';
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
