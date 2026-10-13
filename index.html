@@ -526,7 +526,7 @@ function renderQuestion() {
   document.getElementById('feedback').className = '';
   document.getElementById('examples').classList.remove('open');
   document.getElementById('examples').innerHTML = '';
-  document.getElementById('nextBtn').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none'; document.getElementById('hint-btn').style.display = 'inline-block';
   document.querySelectorAll('.option').forEach(el => { el.classList.remove('disabled','correct','wrong'); el.style.pointerEvents='auto'; el.style.opacity='1'; });
 }
 
@@ -909,7 +909,7 @@ function initLevelFilter() {
   document.head.appendChild(st);
 }
 
-function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function exportWords() {
+function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function exportWords() {
   const data = localStorage.getItem(STORAGE_KEY) || '[]';
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
