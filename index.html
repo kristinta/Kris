@@ -196,8 +196,7 @@
     <div class="tab active" onclick="switchTab('study')">📚 Учить</div>
     <div class="tab" onclick="switchTab('learned')">✅ Выучено</div>
     <div class="tab" onclick="switchTab('dict')">📖 Словарь</div>
-    <div class="tab" onclick="switchTab('add')">➕ Добавить</div>
-  </div>
+    </div>
 
   <!-- Учить -->
   <div id="panel-study" class="panel active">
@@ -480,7 +479,7 @@ function renderQuestion() {
     return;
   }
   if (!document.getElementById('q-word')) {
-    area.innerHTML = '<div class="question"><div class="word" id="q-word">—</div><span class="level-badge" id="q-badge" style="display:none;"></span><div class="sentence hidden" id="q-sentence">—</div><div class="hint" id="q-hint">Выберите правильный перевод</div></div><div class="options" id="options"></div><div class="hint-btn-wrap"><button class="hint-btn" id="hint-btn" onclick="useHint()">💡 Подсказка</button></div><div id="feedback" style="text-align:center;font-weight:700;margin-bottom:10px;min-height:1.6em;"></div><div class="examples" id="examples"></div><div class="next-wrap"><button class="btn primary" id="nextBtn" style="display:none;" onclick="nextQuestion()">Следующее слово →</button></div>';
+    area.innerHTML = '<div class="question"><div class="word" id="q-word">—</div><span class="level-badge" id="q-badge" style="display:none;"></span><button class="btn small" onclick="editCurrentWord()" style="vertical-align:middle;margin-left:6px;" title="Исправить это слово">✏️</button><div class="sentence hidden" id="q-sentence">—</div><div class="hint" id="q-hint">Выберите правильный перевод</div></div><div class="options" id="options"></div><div class="hint-btn-wrap"><button class="hint-btn" id="hint-btn" onclick="useHint()">💡 Подсказка</button></div><div id="feedback" style="text-align:center;font-weight:700;margin-bottom:10px;min-height:1.6em;"></div><div class="examples" id="examples"></div><div class="next-wrap"><button class="btn primary" id="nextBtn" style="display:none;" onclick="nextQuestion()">Следующее слово →</button></div>';
   }
   const w = filtered[order[idx]];
   const dir = getCurrentDir();
@@ -743,8 +742,9 @@ function saveWord() {
   if (existing >= 0) { words[existing] = {...words[existing], ...entry}; }
   else words.push(entry);
   saveWords();
-  resetForm();
+    resetForm();
   switchTab('dict');
+  renderQuestion();
 }
 
 function editWord(id) {
@@ -909,7 +909,7 @@ function initLevelFilter() {
   document.head.appendChild(st);
 }
 
-function exportWords() {
+function editCurrentWord() {   const filtered = getFilteredWords();   if (!filtered.length) return;   const w = filtered[order[idx]];   if (!w) return;   editWord(w.id); }  function exportWords() {
   const data = localStorage.getItem(STORAGE_KEY) || '[]';
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
