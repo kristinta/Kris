@@ -357,7 +357,8 @@ let bad = 0;
 let studyMode = 'learn';
 let studyType = 'words';
 let lastDir = 'ru-tr';
-let hintUsed = false; let selectedLevels = new Set(['A0','A1','A2']);
+let hintUsed = false;
+let selectedLevels = new Set(['A0','A1','A2']);
 
 function saveWords() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(words));
@@ -379,7 +380,13 @@ function shuffleArray(arr) {
 }
 
 function getFilteredWords() {
-  let pool = words.filter(w => studyMode === 'review' ? w.status === 'learned' : w.status !== 'learned');   if (selectedLevels.size) {     pool = pool.filter(w => {       const ls = w.level ? String(w.level).toUpperCase().split(/[+,/ ]+/).filter(Boolean) : null;       return !ls || ls.some(l => selectedLevels.has(l));     });   }
+  let pool = words.filter(w => studyMode === 'review' ? w.status === 'learned' : w.status !== 'learned');
+  if (selectedLevels.size) {
+    pool = pool.filter(w => {
+      const ls = w.level ? String(w.level).toUpperCase().split(/[+,/ ]+/).filter(Boolean) : null;
+      return !ls || ls.some(l => selectedLevels.has(l));
+    });
+  }
   const groupBy = document.getElementById('group-by').value;
   const val = document.getElementById('value-filter').value;
   if (val !== 'all') {
@@ -475,13 +482,11 @@ function renderQuestion() {
   if (!document.getElementById('q-word')) {
     area.innerHTML = '<div class="question"><div class="word" id="q-word">—</div><span class="level-badge" id="q-badge" style="display:none;"></span><div class="sentence hidden" id="q-sentence">—</div><div class="hint" id="q-hint">Выберите правильный перевод</div></div><div class="options" id="options"></div><div class="hint-btn-wrap"><button class="hint-btn" id="hint-btn" onclick="useHint()">💡 Подсказка</button></div><div id="feedback" style="text-align:center;font-weight:700;margin-bottom:10px;min-height:1.6em;"></div><div class="examples" id="examples"></div><div class="next-wrap"><button class="btn primary" id="nextBtn" style="display:none;" onclick="nextQuestion()">Следующее слово →</button></div>';
   }
-
   const w = filtered[order[idx]];
   const dir = getCurrentDir();
   lastDir = dir;
   hintUsed = false;
   document.getElementById('learned-banner').classList.remove('show');
-
   if (studyType === 'words') {
     document.getElementById('q-word').classList.remove('hidden');
     document.getElementById('q-sentence').classList.add('hidden');
@@ -493,22 +498,18 @@ function renderQuestion() {
     document.getElementById('q-hint').textContent = dir === 'ru-tr' ? 'Выберите турецкий перевод' : 'Выберите русский перевод';
     renderOptions(opts, a, w, false);
   } else {
-    // sentences mode
     document.getElementById('q-word').classList.add('hidden');
     document.getElementById('q-sentence').classList.remove('hidden');
     const exs = getExamples(w);
     if (!exs.length) {
-      // fallback to words if no examples
       setStudyType('words');
       renderQuestion();
       return;
     }
     const ex = exs[Math.floor(Math.random() * exs.length)];
-    // Show TR sentence, answer options are RU translations (or vice versa based on dir)
-    const showTr = (dir === 'ru-tr' || dir === 'both' ? Math.random() < 0.5 : dir === 'tr-ru') ? false : true; // simplified: show tr, answer ru
+    const showTr = (dir === 'ru-tr' || dir === 'both' ? Math.random() < 0.5 : dir === 'tr-ru') ? false : true;
     const qText = showTr ? ex.tr : ex.ru;
     const aText = showTr ? ex.ru : ex.tr;
-    // Gather all example translations from other words
     let pool = [];
     filtered.forEach((x, i) => {
       if (i === order[idx]) return;
@@ -520,8 +521,9 @@ function renderQuestion() {
     document.getElementById('q-hint').textContent = showTr ? 'Выберите русский перевод' : 'Выберите турецкое предложение';
     renderOptions(opts, aText, w, true);
   }
-
-  const qBadge = document.getElementById('q-badge');   if (qBadge) { const lv = w.level ? String(w.level).toUpperCase() : ''; qBadge.textContent = lv; qBadge.style.display = lv ? 'inline-block' : 'none'; }   document.getElementById('feedback').textContent = '';
+  const qBadge = document.getElementById('q-badge');
+  if (qBadge) { const lv = w.level ? String(w.level).toUpperCase() : ''; qBadge.textContent = lv; qBadge.style.display = lv ? 'inline-block' : 'none'; }
+  document.getElementById('feedback').textContent = '';
   document.getElementById('feedback').className = '';
   document.getElementById('examples').classList.remove('open');
   document.getElementById('examples').innerHTML = '';
@@ -555,7 +557,6 @@ function chooseOption(el, chosen, correct, word) {
         if (lastDir === 'ru-tr') word.correctRuTr = (word.correctRuTr || 0) + 1;
         else word.correctTrRu = (word.correctTrRu || 0) + 1;
       } else {
-        // sentences: increment both as mixed practice
         word.correctRuTr = (word.correctRuTr || 0) + 1;
         word.correctTrRu = (word.correctTrRu || 0) + 1;
       }
@@ -585,24 +586,19 @@ function useHint() {
   const all = document.querySelectorAll('.option');
   let correctVal = '';
   all.forEach(b => { if (b.classList.contains('correct')) correctVal = b.dataset.val; });
-  // If not revealed yet, find correct from dataset
   if (!correctVal) {
-    // Find which one is correct by checking against current word
     const filtered = getFilteredWords();
     const w = filtered[order[idx]];
     const dir = lastDir;
     if (studyType === 'words') {
       correctVal = dir === 'ru-tr' ? w.tr : w.ru;
-    } else {
-      // sentence mode: need to find the correct text from options
-      // Since we don't store it easily, just highlight all and let user see
     }
   }
   all.forEach(b => {
     if (b.dataset.val === correctVal) b.classList.add('correct');
     b.classList.add('disabled');
   });
-  document.getElementById('feedback').textContent = '💡 Подсказка: правильный ответ подсвечен. Попробуйте запомнить!'; 
+  document.getElementById('feedback').textContent = '💡 Подсказка: правильный ответ подсвечен. Попробуйте запомнить!';
   document.getElementById('feedback').style.color = 'var(--warning)';
   document.getElementById('nextBtn').style.display = 'inline-block';
 }
@@ -666,8 +662,6 @@ function renderDict() {
   tbody.innerHTML = '';
   if (!words.length) { empty.style.display = 'block'; sel.innerHTML = '<option value="">Нет слов</option>'; return; }
   empty.style.display = 'none';
-
-  // populate edit select
   let opts = '<option value="">Выберите карточку для редактирования...</option>';
   words.forEach(w => {
     opts += '<option value="' + w.id + '">' + escapeHtml(w.tr) + ' — ' + escapeHtml(w.ru) + '</option>';
@@ -799,7 +793,6 @@ function importData() {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    // Skip markdown separator
     if (line.replace(/\|/g,'').trim().replace(/-/g,'').trim() === '') continue;
     let cols = line.split('\t');
     if (cols.length < 6) cols = line.split(';');
@@ -814,7 +807,12 @@ function importData() {
     const tr = cols[0].trim();
     const ru = cols[1].trim();
     if (!tr || !ru) { skipped++; continue; }
-    const dup = words.find(w => w.tr === tr && w.ru === ru);     if (dup) {       const lvl = (cols[10] || '').trim().toUpperCase();       if (lvl) dup.level = lvl;       dups++; continue;     }
+    const dup = words.find(w => w.tr === tr && w.ru === ru);
+    if (dup) {
+      const lvl = (cols[10] || '').trim().toUpperCase();
+      if (lvl) dup.level = lvl;
+      dups++; continue;
+    }
     words.push({
       id: generateId(), tr, ru,
       topic: (cols[2] || '').trim() || 'Другое',
@@ -824,7 +822,8 @@ function importData() {
       a1_tr: (cols[6] || '').trim(),
       a1_ru: (cols[7] || '').trim(),
       a1p_tr: (cols[8] || '').trim(),
-            a1p_ru: (cols[9] || '').trim(),       level: (cols[10] || '').trim().toUpperCase(),
+      a1p_ru: (cols[9] || '').trim(),
+      level: (cols[10] || '').trim().toUpperCase(),
       correctRuTr: 0, correctTrRu: 0, status: 'learning'
     });
     added++;
@@ -863,10 +862,54 @@ function importFromFile(event) {
   };
   reader.readAsText(file);
 }
-  initLevelFilter();   loadWords();
 
+function toggleLevel(btn) {
+  const lv = btn.dataset.lv;
+  if (selectedLevels.has(lv)) selectedLevels.delete(lv); else selectedLevels.add(lv);
+  btn.classList.toggle('active', selectedLevels.has(lv));
+  applyFilter();
+}
 
-function toggleLevel(btn) {   const lv = btn.dataset.lv;   if (selectedLevels.has(lv)) selectedLevels.delete(lv); else selectedLevels.add(lv);   btn.classList.toggle('active', selectedLevels.has(lv));   applyFilter(); }  function initLevelFilter() {   if (document.getElementById('level-row')) return;   const row = document.createElement('div');   row.id = 'level-row';   row.innerHTML = '<span style="font-weight:600;">Уровень:</span>' +     '<button type="button" class="level-chip active" data-lv="A0" onclick="toggleLevel(this)">A0</button>' +     '<button type="button" class="level-chip active" data-lv="A1" onclick="toggleLevel(this)">A1</button>' +     '<button type="button" class="level-chip active" data-lv="A2" onclick="toggleLevel(this)">A2</button>';   const toggle = document.getElementById('mode-toggle');   if (toggle) {     const rowDiv = toggle.parentElement;     rowDiv.parentElement.insertBefore(row, rowDiv.nextSibling);   } else {     document.body.appendChild(row);   }   const dt = document.querySelector('#dict-table thead tr');   if (dt && dt.children.length >= 4) {     const th = document.createElement('th');     th.textContent = 'Уровень';     dt.insertBefore(th, dt.lastElementChild);   }   const hint = document.querySelector('.hint-box');   if (hint && !hint.querySelector('.lvl-hint')) {     const s = document.createElement('span');     s.className = 'lvl-hint';     s.innerHTML = ' → <code>Уровень</code>';     hint.appendChild(s);   }   const st = document.createElement('style');   st.textContent =     '#mode-words, #mode-sentences { background:#e5e7eb !important; color:#6b7280 !important; }' +     '#mode-words.active, #mode-sentences.active { background:#2f6fed !important; color:#fff !important; }' +     '.level-chip { border:none; border-radius:20px; padding:7px 16px; font-size:0.95rem; font-weight:600; background:#e5e7eb; color:#6b7280; cursor:pointer; }' +     '.level-chip.active { background:#2f6fed; color:#fff; }' +     '.level-badge { background:#e8efff; color:#2f6fed; border-radius:10px; padding:3px 10px; font-size:0.85rem; font-weight:700; margin:0 0 8px; display:inline-block; }' +     '#level-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }';   document.head.appendChild(st); } function exportWords() {
+function initLevelFilter() {
+  if (document.getElementById('level-row')) return;
+  const row = document.createElement('div');
+  row.id = 'level-row';
+  row.innerHTML = '<span style="font-weight:600;">Уровень:</span>' +
+    '<button type="button" class="level-chip active" data-lv="A0" onclick="toggleLevel(this)">A0</button>' +
+    '<button type="button" class="level-chip active" data-lv="A1" onclick="toggleLevel(this)">A1</button>' +
+    '<button type="button" class="level-chip active" data-lv="A2" onclick="toggleLevel(this)">A2</button>';
+  const toggle = document.getElementById('mode-toggle');
+  if (toggle) {
+    const rowDiv = toggle.parentElement;
+    rowDiv.parentElement.insertBefore(row, rowDiv.nextSibling);
+  } else {
+    document.body.appendChild(row);
+  }
+  const dt = document.querySelector('#dict-table thead tr');
+  if (dt && dt.children.length >= 4) {
+    const th = document.createElement('th');
+    th.textContent = 'Уровень';
+    dt.insertBefore(th, dt.lastElementChild);
+  }
+  const hint = document.querySelector('.hint-box');
+  if (hint && !hint.querySelector('.lvl-hint')) {
+    const s = document.createElement('span');
+    s.className = 'lvl-hint';
+    s.innerHTML = ' → <code>Уровень</code>';
+    hint.appendChild(s);
+  }
+  const st = document.createElement('style');
+  st.textContent =
+    '#mode-words, #mode-sentences { background:#e5e7eb !important; color:#6b7280 !important; }' +
+    '#mode-words.active, #mode-sentences.active { background:#2f6fed !important; color:#fff !important; }' +
+    '.level-chip { border:none; border-radius:20px; padding:7px 16px; font-size:0.95rem; font-weight:600; background:#e5e7eb; color:#6b7280; cursor:pointer; }' +
+    '.level-chip.active { background:#2f6fed; color:#fff; }' +
+    '.level-badge { background:#e8efff; color:#2f6fed; border-radius:10px; padding:3px 10px; font-size:0.85rem; font-weight:700; margin:0 0 8px; display:inline-block; }' +
+    '#level-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }';
+  document.head.appendChild(st);
+}
+
+function exportWords() {
   const data = localStorage.getItem(STORAGE_KEY) || '[]';
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -877,6 +920,8 @@ function toggleLevel(btn) {   const lv = btn.dataset.lv;   if (selectedLevels.ha
   URL.revokeObjectURL(url);
 }
 
+initLevelFilter();
+loadWords();
 </script>
 </body>
 </html>
